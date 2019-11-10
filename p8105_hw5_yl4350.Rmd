@@ -52,4 +52,71 @@ iris_fill
 
 
 # Problem 2 
+* Start with a dataframe containing all file names
+```{r}
+filename = tibble(file_name = list.files("./data"))
+```
+
+* Iterate over file names and read in data for each subject using `purrr::map` and saving the result as a new variable in the dataframe
+
+```{r}
+path = vector("list", length = 20)
+
+for (i in 1:20) {
+  path[i] = str_c("./data/", filename[i,1])
+}
+
+data = map(path, read_csv)
+
+df = 
+  filename %>% 
+  mutate(data = data)%>% 
+  unnest()
+```
+
+* Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
+
+```{r}
+df_clean =
+  df %>%
+  separate(file_name, into = c("arm", "subject_id"), sep = "_") %>% 
+  mutate(
+    subject_id = str_remove(subject_id, pattern = ".csv"),
+    arm = str_replace(arm, "con", "control"),
+    arm = str_replace(arm, "exp", "experimental")
+  ) %>% 
+  pivot_longer(
+    3:10,
+    names_to = "week",
+    names_prefix = "week_"
+  ) %>% 
+  mutate(
+    arm = as.factor(arm),
+    subject_id = as.factor(subject_id),
+    week = as.factor(week)
+  )
+
+```
+
+* Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups
+
+```{r}
+plot =
+  df_clean %>% 
+  group_by(week, arm, subject_id) %>% 
+  ggplot(aes(x = week, y = value, color = subject_id))+
+  geom_line(aes(group = subject_id))+
+  facet_grid(.~arm)+
+  labs(title = "Observations on each subject over time")
+
+plot
+```
+
+The values in control group is almost consistant over time but the values in experimental group have an overall increasing trend within 8 weeks.
+
+# Problem 3
+
+```{r}
+
+```
 
